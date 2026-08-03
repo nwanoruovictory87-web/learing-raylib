@@ -38,11 +38,13 @@ void init_board(){
 
 int main(void){
     //fprintf(stdout, "well the file is loaded \n");
-    InitWindow(800, 450, "puzle game");// screan width
+    InitWindow(800, 450, "puzzle game");// screan width
     SetTargetFPS(60);// this tells the updates the cpu every 16miliseconds leave this out and your cpu works the loop
     srand(time(NULL));
     background = LoadTexture("assets/d.png");
     Vector2 mouse ={0, 0};
+    Vector2 selectedTile={0, 0};
+    Vector2 compiredTile={0, 0};
     init_board();
     //fprintf(stdout, "random %d \n", rand());
     //lets bring out our raylib window
@@ -54,7 +56,12 @@ int main(void){
             fprintf(stdout, "mouse is pressed %d times mouse position horizontaly is %f  mouse position vaticaly is %f \n", ++count, mouse.x, mouse.y);
             int xClikedPosition= (mouse.x - grid_origin.x) / TILE_SIZE;
             int yClikedPosition= (mouse.y - grid_origin.y) / TILE_SIZE;
-            fprintf(stdout, "user cliked carecter %c  index  cliked are x - %d y- %d\n", board[yClikedPosition][xClikedPosition], xClikedPosition, yClikedPosition);
+            if(xClikedPosition >= 0 && xClikedPosition < 8 && yClikedPosition >= 0 && yClikedPosition < 8){
+                fprintf(stdout, "user cliked carecter %c  index  cliked are x - %d y- %d\n", board[yClikedPosition][xClikedPosition], xClikedPosition, yClikedPosition);
+                compiredTile =(Vector2){selectedTile.x, selectedTile.y};
+                selectedTile=(Vector2){xClikedPosition + 1, yClikedPosition + 1};
+                
+            }
             /*
             am going to be addressing view port values in pixes
             so basicaly to get the position cliked we suptract the position cliked on the screan 
@@ -212,12 +219,12 @@ int main(void){
             to start at the middle we have to start first row at 232px and first colume at 57px
             which we can apply as follow
             Rectangle rect={
-                    window width - grid width + row index  * 46 ,
-                   window heigth - grid higth + row index  * 46 ,,
+                    ((window width - grid width) / 2)  + row index  * 46 ,
+                    ((window heigth - grid higth) / 2) + row index  * 46 ,
                     TILE_SIZE,
                     TILE_SIZE
                 };
-                DrawRectangleLinesEx(rect, 2, BLACK);
+            DrawRectangleLinesEx(rect, 2, BLACK);
           }
              }
             
@@ -237,7 +244,7 @@ int main(void){
             0.0f,
             WHITE
         );
-        DrawText(TextFormat("Score: %d", score), 10, 16, 20, ORANGE);
+        DrawText(TextFormat("Score: %d", score), 15, 16, 20, ORANGE);
         //fprintf(stdout, "gird origin %lf \r", grid_origin.x);
         for(int x=0; x<BOARD_SIZE; x++){
             //
@@ -256,6 +263,41 @@ int main(void){
                     20, 1, WHITE
                 );
             }
+        }
+        //
+        if(selectedTile.x > 0){
+            DrawRectangleLinesEx((Rectangle){
+            grid_origin.x + ((selectedTile.x -1) * TILE_SIZE),
+            grid_origin.y + ((selectedTile.y -1)* TILE_SIZE),
+            TILE_SIZE,
+            TILE_SIZE
+        },
+        2,
+        YELLOW
+        );
+        
+        if(compiredTile.x > 0){
+            int x= selectedTile.x -1;
+            int y= selectedTile.y -1; 
+            int cx= compiredTile.x - 1;
+            int cy= compiredTile.y - 1;
+            char selectedCharecter= board[y][x];
+            char compiredCharecter= board[cy][cx];
+            fprintf(stdout, "selected tile %c and compired tile is %c \r", selectedCharecter, compiredCharecter);
+            // swap tiles
+            if(((cx + 1) == x) && cy == y || ((cx - 1) == x) && cy == y){
+            board[y][x]= compiredCharecter;
+            board[cy][cx]= selectedCharecter;
+            fprintf(stdout, "move tile \n");
+            }else if(((cy + 1) == y) && cx == x || ((cy - 1) == y) && cx == x){
+            board[y][x]= compiredCharecter;
+            board[cy][cx]= selectedCharecter;
+            fprintf(stdout, "move tile \n");
+            }
+            compiredTile=(Vector2){0, 0};
+            fprintf(stdout, "user is at cx %d and want to move x %d cy %d and want to move y %d \n", cx, x, cy, y);
+        }
+        
         }
         
         
