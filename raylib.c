@@ -5,6 +5,7 @@
 #include <stdbool.h>
 #include <string.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 #define BOARD_SIZE 8
 #define TILE_SIZE 42
@@ -20,7 +21,56 @@ Texture2D background;
 char random_tile(){
     return tile_chars[rand() % TILE_TYPES];
 }
+bool tilesMacthes[BOARD_SIZE][BOARD_SIZE]={false};
 
+bool findTilesMacthes(){
+    bool found= false;
+    for(int x=0; x<BOARD_SIZE; x++){
+        for(int y=0; y<BOARD_SIZE - 2; y++){
+                char wy1= board[x][y];
+                char wy2= board[x][y + 1];
+                char wy3= board[x][y + 2];
+                if(wy1 == wy2 && wy2 == wy3){
+                      //fprintf(stdout, "won index y starting %d end %d is %c, %c, %c \n", y, y+2, wy1, wy2, wy3);
+                     tilesMacthes[x][y] = true;
+                     tilesMacthes[x][y + 1] = true;
+                     tilesMacthes[x][y + 2] = true;
+                     score++;
+                     found = true;
+                }
+                    //
+        };
+    };
+    for (int x=0; x<BOARD_SIZE - 2; x++){
+        for(int y=0; y<BOARD_SIZE; y++){
+             char yw1= board[x][y];
+             char yw2= board[x  + 1][y];
+             char yw3= board[x  + 2][y];
+             if(yw1 == yw2 && yw2 == yw3){
+             //fprintf(stdout, "won index x starting %d end %d is %c, %c, %c and y is %d \n", x, x+2, yw1, yw2, yw3, y);
+             tilesMacthes[x][y] = true;
+             tilesMacthes[x + 1][y] = true;
+             tilesMacthes[x + 1][y] = true;
+              score++;
+              found = true;
+            }
+        }
+    }
+    return found;
+};
+void removeMacthes(){
+        for(int xAxios=0; xAxios < BOARD_SIZE; xAxios){
+            for(int yAxios=0; yAxios <BOARD_SIZE; yAxios++){
+                if(tilesMacthes[xAxios][yAxios]){
+                    board[xAxios][yAxios]= random_tile();
+                    tilesMacthes[xAxios][yAxios]= false;
+                }else{
+                    board[xAxios][yAxios]= board[xAxios][yAxios];
+                }
+            }
+        }
+    
+}
 void init_board(){
     for(int i=0; i<BOARD_SIZE; i++){// for outer section of array
         for(int j=0; j<BOARD_SIZE; j++){// for iner section of array
@@ -46,21 +96,28 @@ int main(void){
     Vector2 selectedTile={0, 0};
     Vector2 compiredTile={0, 0};
     init_board();
+    findTilesMacthes();
+    //removeMacthes();
     //fprintf(stdout, "random %d \n", rand());
     //lets bring out our raylib window
     int count =0;
     while(!WindowShouldClose()){
+          //findTilesMacthes(); 
         // lestin on mouse events
         mouse = GetMousePosition();
         if(IsMouseButtonPressed(MOUSE_LEFT_BUTTON)){
-            fprintf(stdout, "mouse is pressed %d times mouse position horizontaly is %f  mouse position vaticaly is %f \n", ++count, mouse.x, mouse.y);
+            //fprintf(stdout, "mouse is pressed %d times mouse position horizontaly is %f  mouse position vaticaly is %f \n", ++count, mouse.x, mouse.y);
             int xClikedPosition= (mouse.x - grid_origin.x) / TILE_SIZE;
             int yClikedPosition= (mouse.y - grid_origin.y) / TILE_SIZE;
             if(xClikedPosition >= 0 && xClikedPosition < 8 && yClikedPosition >= 0 && yClikedPosition < 8){
-                fprintf(stdout, "user cliked carecter %c  index  cliked are x - %d y- %d\n", board[yClikedPosition][xClikedPosition], xClikedPosition, yClikedPosition);
+               // fprintf(stdout, "user cliked carecter %c  index  cliked are x - %d y- %d\n", board[yClikedPosition][xClikedPosition], xClikedPosition, yClikedPosition);
                 compiredTile =(Vector2){selectedTile.x, selectedTile.y};
                 selectedTile=(Vector2){xClikedPosition + 1, yClikedPosition + 1};
-                
+                //removeMacthes();
+                findTilesMacthes();
+            }else{
+            selectedTile=(Vector2){0, 0};
+             compiredTile=(Vector2){0, 0};
             }
             /*
             am going to be addressing view port values in pixes
@@ -258,11 +315,13 @@ int main(void){
                 DrawRectangleLinesEx(rect, 2, BLACK);
                 DrawTextEx(
                     GetFontDefault(),
-                    TextFormat("%c", board[y][x]),
+                    TextFormat("%c", board[x][y]),
                     (Vector2) {rect.x + 13, rect.y + 9},
-                    20, 1, WHITE
+                    20, 1, tilesMacthes[x][y] ? GREEN : WHITE
                 );
-            }
+                //   
+            };
+            
         }
         //
         if(selectedTile.x > 0){
@@ -281,26 +340,26 @@ int main(void){
             int y= selectedTile.y -1; 
             int cx= compiredTile.x - 1;
             int cy= compiredTile.y - 1;
-            char selectedCharecter= board[y][x];
-            char compiredCharecter= board[cy][cx];
-            fprintf(stdout, "selected tile %c and compired tile is %c \r", selectedCharecter, compiredCharecter);
+            char selectedCharecter= board[x][y];
+            char compiredCharecter= board[cx][cy];
+            //fprintf(stdout, "selected tile %c and compired tile is %c \r", selectedCharecter, compiredCharecter);
             // swap tiles
             if(((cx + 1) == x) && cy == y || ((cx - 1) == x) && cy == y){
-            board[y][x]= compiredCharecter;
-            board[cy][cx]= selectedCharecter;
-            fprintf(stdout, "move tile \n");
+            board[x][y]= compiredCharecter;
+            board[cx][cy]= selectedCharecter;
+            //fprintf(stdout, "move tile \n");
             }else if(((cy + 1) == y) && cx == x || ((cy - 1) == y) && cx == x){
-            board[y][x]= compiredCharecter;
-            board[cy][cx]= selectedCharecter;
-            fprintf(stdout, "move tile \n");
+            board[x][y]= compiredCharecter;
+            board[cx][cy]= selectedCharecter;
+            //fprintf(stdout, "move tile \n");
             }
             compiredTile=(Vector2){0, 0};
-            fprintf(stdout, "user is at cx %d and want to move x %d cy %d and want to move y %d \n", cx, x, cy, y);
+            //fprintf(stdout, "user is at cx %d and want to move x %d cy %d and want to move y %d \n", cx, x, cy, y);
+                    
+                    
         }
         
         }
-        
-        
         EndDrawing();
     };
     
