@@ -25,51 +25,75 @@ bool tilesMacthes[BOARD_SIZE][BOARD_SIZE]={false};
 
 bool findTilesMacthes(){
     bool found= false;
+     for(int x=0; x<BOARD_SIZE; x++){
+        for(int y=0; y<BOARD_SIZE; y++){
+                tilesMacthes[x][y] = false;
+                //
+        };
+    };
+    //
     for(int x=0; x<BOARD_SIZE; x++){
+        int indexX = -1;
         for(int y=0; y<BOARD_SIZE - 2; y++){
-                char wy1= board[x][y];
-                char wy2= board[x][y + 1];
-                char wy3= board[x][y + 2];
-                if(wy1 == wy2 && wy2 == wy3){
-                      //fprintf(stdout, "won index y starting %d end %d is %c, %c, %c \n", y, y+2, wy1, wy2, wy3);
+                if(board[x][y] == board[x][y + 1] && board[x][y] == board[x][y + 2] && indexX != x){
                      tilesMacthes[x][y] = true;
                      tilesMacthes[x][y + 1] = true;
                      tilesMacthes[x][y + 2] = true;
-                     score++;
+                     score+=10;
+                     fprintf(stdout, "won index y starting %d middel is %d end %d is %c, %c, %c  and x is %d indexX is %d\n", y, y+ 1, y+2, board[x][y], board[x][y + 1], board[x][y + 2], x, indexX);
+                    indexX= x;
                      found = true;
                 }
-                    //
+                //
         };
     };
-    for (int x=0; x<BOARD_SIZE - 2; x++){
+    //
+    int indexY= -1;
+     for(int x=0; x<BOARD_SIZE - 2; x++){
         for(int y=0; y<BOARD_SIZE; y++){
-             char yw1= board[x][y];
-             char yw2= board[x  + 1][y];
-             char yw3= board[x  + 2][y];
-             if(yw1 == yw2 && yw2 == yw3){
-             //fprintf(stdout, "won index x starting %d end %d is %c, %c, %c and y is %d \n", x, x+2, yw1, yw2, yw3, y);
-             tilesMacthes[x][y] = true;
-             tilesMacthes[x + 1][y] = true;
-             tilesMacthes[x + 1][y] = true;
-              score++;
-              found = true;
-            }
-        }
-    }
+                if(board[x][y] == board[x  + 1][y] && board[x][y] == board[x  + 2][y] && indexY != y){
+                tilesMacthes[x][y] = true;
+                tilesMacthes[x + 1][y] = true;
+                tilesMacthes[x + 2][y] = true;
+                score+=10;
+                fprintf(stdout, "won index x starting %d middel is %d end %d is %c, %c, %c  and y is %d indexY is %d\n", x, x + 1, x+2, board[x][y], board[x + 1][y], board[x + 2][y], y, indexY);
+                indexY =y;
+                found = true;
+                }
+        };
+    };
     return found;
 };
 void removeMacthes(){
-        for(int xAxios=0; xAxios < BOARD_SIZE; xAxios){
-            for(int yAxios=0; yAxios <BOARD_SIZE; yAxios++){
-                if(tilesMacthes[xAxios][yAxios]){
-                    board[xAxios][yAxios]= random_tile();
-                    tilesMacthes[xAxios][yAxios]= false;
-                }else{
-                    board[xAxios][yAxios]= board[xAxios][yAxios];
-                }
+    for(int x=0; x<BOARD_SIZE - 1; x++){
+        int write_y=BOARD_SIZE -1;
+        for(int y=BOARD_SIZE - 1; y>=0; y--){
+          fprintf(stdout, "x %d y %d write_y %d \n", x, y, write_y); 
+          fprintf(stdout, "did till macth %s \n", (tilesMacthes[x][y]) ? "True" : "False");
+            if(!(tilesMacthes[x][y])){
+                board[x][write_y]= board[x][y];
+                write_y --;
             }
         }
-    
+        while(write_y >=0){
+                board[x][write_y]= random_tile();
+                write_y --;
+        }
+    }    
+
+    //
+    /*
+    for(int xAxios=0; xAxios < BOARD_SIZE; xAxios++){
+       for(int yAxios=0; yAxios <BOARD_SIZE; yAxios++){
+         if(!(tilesMacthes[xAxios][yAxios])){
+             board[xAxios][yAxios]= filteredOutList[xAxios][yAxios];
+            }else{
+             board[xAxios][yAxios]= random_tile();
+            }
+        }
+    }
+    */
+   //fprintf(stdout, "list %c \n", (filteredOutListIndex[0][6]));
 }
 void init_board(){
     for(int i=0; i<BOARD_SIZE; i++){// for outer section of array
@@ -96,14 +120,30 @@ int main(void){
     Vector2 selectedTile={0, 0};
     Vector2 compiredTile={0, 0};
     init_board();
-    findTilesMacthes();
     //removeMacthes();
     //fprintf(stdout, "random %d \n", rand());
     //lets bring out our raylib window
     int count =0;
+    //double timeSinceLastFrame=GetFrameTime();
+    //double *test= &timeSinceLastFrame;
+    //round()
+    //fprintf(stdout, "test is this an array %f \n", timeSinceLastFrame);
+
     while(!WindowShouldClose()){
+        if(findTilesMacthes()){
+        removeMacthes();
+        };
           //findTilesMacthes(); 
         // lestin on mouse events
+      //float const newTimeFrame= GetFrameTime();
+      
+       /*
+       if(newTimeFrame != timeSinceLastFrame){
+        //fprintf(stdout, "times passed since last frame is %f \r", timeSinceLastFrame);
+        fprintf(stdout, "time in int - %f  old time is %f is new time same as old time %s\n", newTimeFrame, timeSinceLastFrame, (newTimeFrame == timeSinceLastFrame) ? "True": "False");
+        timeSinceLastFrame = newTimeFrame;
+        };
+      */
         mouse = GetMousePosition();
         if(IsMouseButtonPressed(MOUSE_LEFT_BUTTON)){
             //fprintf(stdout, "mouse is pressed %d times mouse position horizontaly is %f  mouse position vaticaly is %f \n", ++count, mouse.x, mouse.y);
@@ -113,8 +153,8 @@ int main(void){
                // fprintf(stdout, "user cliked carecter %c  index  cliked are x - %d y- %d\n", board[yClikedPosition][xClikedPosition], xClikedPosition, yClikedPosition);
                 compiredTile =(Vector2){selectedTile.x, selectedTile.y};
                 selectedTile=(Vector2){xClikedPosition + 1, yClikedPosition + 1};
+                //findTilesMacthes();
                 //removeMacthes();
-                findTilesMacthes();
             }else{
             selectedTile=(Vector2){0, 0};
              compiredTile=(Vector2){0, 0};
@@ -358,9 +398,9 @@ int main(void){
                     
                     
         }
-        
         }
         EndDrawing();
+        //removeMacthes();
     };
     
     //clear resuses
