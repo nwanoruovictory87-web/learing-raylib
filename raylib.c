@@ -16,12 +16,16 @@ const char tile_chars[TILE_TYPES]={'$', '%', '&', '@', '#'};
 
 
 char board[BOARD_SIZE][BOARD_SIZE]={0};
+bool tilesMacthes[BOARD_SIZE][BOARD_SIZE]={false};
+float fall_offset[BOARD_SIZE][BOARD_SIZE]={0};
+
 Vector2 grid_origin;
 Texture2D background;
+float fall_speed= 8.0f;
+
 char random_tile(){
     return tile_chars[rand() % TILE_TYPES];
 }
-bool tilesMacthes[BOARD_SIZE][BOARD_SIZE]={false};
 
 bool findTilesMacthes(){
     bool found= false;
@@ -40,8 +44,8 @@ bool findTilesMacthes(){
                      tilesMacthes[x][y + 1] = true;
                      tilesMacthes[x][y + 2] = true;
                      score+=10;
-                     fprintf(stdout, "won index y starting %d middel is %d end %d is %c, %c, %c  and x is %d indexX is %d\n", y, y+ 1, y+2, board[x][y], board[x][y + 1], board[x][y + 2], x, indexX);
-                    indexX= x;
+                     //fprintf(stdout, "won index y starting %d middel is %d end %d is %c, %c, %c  and x is %d indexX is %d\n", y, y+ 1, y+2, board[x][y], board[x][y + 1], board[x][y + 2], x, indexX);
+                     indexX= x;
                      found = true;
                 }
                 //
@@ -56,7 +60,7 @@ bool findTilesMacthes(){
                 tilesMacthes[x + 1][y] = true;
                 tilesMacthes[x + 2][y] = true;
                 score+=10;
-                fprintf(stdout, "won index x starting %d middel is %d end %d is %c, %c, %c  and y is %d indexY is %d\n", x, x + 1, x+2, board[x][y], board[x + 1][y], board[x + 2][y], y, indexY);
+                //fprintf(stdout, "won index x starting %d middel is %d end %d is %c, %c, %c  and y is %d indexY is %d\n", x, x + 1, x+2, board[x][y], board[x + 1][y], board[x + 2][y], y, indexY);
                 indexY =y;
                 found = true;
                 }
@@ -65,18 +69,24 @@ bool findTilesMacthes(){
     return found;
 };
 void removeMacthes(){
-    for(int x=0; x<BOARD_SIZE - 1; x++){
-        int write_y=BOARD_SIZE -1;
-        for(int y=BOARD_SIZE - 1; y>=0; y--){
-          fprintf(stdout, "x %d y %d write_y %d \n", x, y, write_y); 
-          fprintf(stdout, "did till macth %s \n", (tilesMacthes[x][y]) ? "True" : "False");
+    for(int x=0; x<BOARD_SIZE; x++){
+        int write_y=BOARD_SIZE;
+        for(int y=BOARD_SIZE; y>=0; y--){
+          //fprintf(stdout, "x %d y %d write_y %d \n", x, y, write_y); 
+          //fprintf(stdout, "did till macth %s \n", (tilesMacthes[x][y]) ? "True" : "False");
             if(!(tilesMacthes[x][y])){
-                board[x][write_y]= board[x][y];
+                if(y != write_y){
+                    board[x][write_y] = board[x][y];
+                    fall_offset[x][write_y] = (write_y - y) * TILE_SIZE;
+                    board[x][y] = ' ';
+                }
                 write_y --;
             }
         }
+        // fill empty spots with random till
         while(write_y >=0){
                 board[x][write_y]= random_tile();
+                fall_offset[x][write_y] = (write_y + 1) * TILE_SIZE;
                 write_y --;
         }
     }    
@@ -130,9 +140,22 @@ int main(void){
     //fprintf(stdout, "test is this an array %f \n", timeSinceLastFrame);
 
     while(!WindowShouldClose()){
+        
+        //
         if(findTilesMacthes()){
         removeMacthes();
         };
+        //
+        for(int x=0; x<BOARD_SIZE; x++){
+            for(int y=0; y<BOARD_SIZE; y++){
+                if(fall_offset[x][y] > 0){
+                    fall_offset[x][y] -= fall_speed;
+                if(fall_offset[x][y] < 0){
+                    fall_offset[x][y]= 0;
+                }
+                }
+            }
+        }
           //findTilesMacthes(); 
         // lestin on mouse events
       //float const newTimeFrame= GetFrameTime();
@@ -353,13 +376,15 @@ int main(void){
                     TILE_SIZE
                 };
                 DrawRectangleLinesEx(rect, 2, BLACK);
+                if(board[x][y] != ' '){
                 DrawTextEx(
                     GetFontDefault(),
                     TextFormat("%c", board[x][y]),
-                    (Vector2) {rect.x + 13, rect.y + 9},
+                    (Vector2) {rect.x + 13, rect.y + 9 - fall_offset[x][y]},
                     20, 1, tilesMacthes[x][y] ? GREEN : WHITE
                 );
-                //   
+                //  
+                } 
             };
             
         }
@@ -374,7 +399,6 @@ int main(void){
         2,
         YELLOW
         );
-        
         if(compiredTile.x > 0){
             int x= selectedTile.x -1;
             int y= selectedTile.y -1; 
@@ -382,22 +406,26 @@ int main(void){
             int cy= compiredTile.y - 1;
             char selectedCharecter= board[x][y];
             char compiredCharecter= board[cx][cy];
-            //fprintf(stdout, "selected tile %c and compired tile is %c \r", selectedCharecter, compiredCharecter);
+            fprintf(stdout, "selected tile %c and compired tile is %c \n", selectedCharecter, compiredCharecter);
             // swap tiles
             if(((cx + 1) == x) && cy == y || ((cx - 1) == x) && cy == y){
+            if((((cx + 2 < 8) && (board[cx + 2][cy] == board[cx][cy])) || ((cy - 2 >= 0) && (board[cx  - 2][cy] == board[cx][cy]))) || (board[x][y + 1] == board[cx][cy] || board[x][y - 1] == board[cx][cy])){ 
             board[x][y]= compiredCharecter;
             board[cx][cy]= selectedCharecter;
-            //fprintf(stdout, "move tile \n");
-            }else if(((cy + 1) == y) && cx == x || ((cy - 1) == y) && cx == x){
+            fprintf(stdout, "move tile compired till is %c selected tile is %c \n", compiredCharecter, selectedCharecter);
+            };
+            }else if(((cy + 1 == y) && cx == x  || (cy - 1 == y) && cx == x )){
+            if((((cy + 2 < 8) && (board[cx][cy + 2] == board[cx][cy])) || ((cy - 2 >= 0) && (board[cx][cy - 2] == board[cx][cy]))) || (board[x + 1][y] == board[cx][cy] || board[x - 1][y] == board[cx][cy])){    
+            fprintf(stdout, "compired + 2 is %c and compired till - 2 is %c  move to %c selcted till is %c compired till is %c\n", board[cx][cy + 2], board[cx][cy - 2], board[x][y], selectedCharecter, compiredCharecter);
+            fprintf(stdout, "move tile compired till is %c selected tile is %c  borderTile is %c or %c\n", compiredCharecter, selectedCharecter, board[x][y + 1], board[x][y]);
             board[x][y]= compiredCharecter;
             board[cx][cy]= selectedCharecter;
-            //fprintf(stdout, "move tile \n");
             }
-            compiredTile=(Vector2){0, 0};
+            }
+            compiredTile=(Vector2){0, 0};board[cx][cy + 1];
             //fprintf(stdout, "user is at cx %d and want to move x %d cy %d and want to move y %d \n", cx, x, cy, y);
-                    
-                    
-        }
+             
+            }
         }
         EndDrawing();
         //removeMacthes();
